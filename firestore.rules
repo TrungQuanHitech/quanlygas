@@ -1,0 +1,143 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'Quản lý']) ||
+        (isSetupMode() && request.auth.token.email == "daiphuthinhninhthuan@gmail.com")
+      );
+    }
+
+    function isManager() {
+      return isAdmin();
+    }
+
+    function isAccountantOrManager() {
+      return isAuthenticated() && 
+        (isManager() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Kế toán'));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isSetupMode() {
+      return !exists(/databases/$(database)/documents/internal_config/setup_complete);
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'role', 'status', 'createdAt']) &&
+             data.email is string &&
+             data.role in ['Admin', 'Quản lý', 'Kế toán', 'Nhân viên'] &&
+             data.status in ['Chờ kích hoạt', 'Đang làm việc', 'Tạm nghỉ', 'Đã nghỉ việc'] &&
+             data.createdAt is string;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['title', 'assigneeEmail', 'status', 'dueDate', 'createdAt', 'createdBy']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.assigneeEmail is string &&
+             data.status in ['Đang thực hiện', 'Đã hoàn thành', 'Tạm dừng'] &&
+             data.dueDate is string &&
+             data.createdAt is string &&
+             data.createdBy is string;
+    }
+
+    function isValidRecord(data) {
+      return data.keys().hasAll(['type', 'name', 'fileUrl', 'createdAt', 'createdBy']) &&
+             data.type in ['Pháp lý', 'Kỹ thuật', 'Hồ sơ khác'] &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.fileUrl is string &&
+             data.createdAt is string &&
+             data.createdBy is string;
+    }
+
+    function isValidInvoice(data) {
+      return data.keys().hasAll(['fileName', 'parsedData', 'createdAt', 'createdBy']) &&
+             data.fileName is string && data.fileName.size() > 0 && data.fileName.size() < 200 &&
+             data.parsedData is string &&
+             data.createdAt is string &&
+             data.createdBy is string;
+    }
+
+    function isValidSetting(data) {
+      return data.keys().hasAll(['companyName']) &&
+             data.companyName is string && data.companyName.size() > 0 && data.companyName.size() < 200;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      // Allow Managers/Accountants to create new user entries (whitelist)
+      // Also allow the first user ever to create their own profile as Manager (Admin) if setup is not complete
+      allow create: if isAuthenticated() && 
+                    (isAccountantOrManager() || (isOwner(userId) && isSetupMode() && request.resource.data.role == 'Quản lý')) && 
+                    isValidUser(request.resource.data);
+      
+      // Allow the user themselves to update their own record (UID, lastLogin, status, displayName)
+      // OR allow Managers/Accountants to update roles/status
+      allow update: if isAuthenticated() && 
+                    (isAccountantOrManager() || 
+                     (isOwner(userId) && 
+                      request.resource.data.diff(resource.data).affectedKeys().hasAny(['uid', 'lastLogin', 'status', 'displayName']))
+                    );
+      allow delete: if isManager();
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidTask(request.resource.data) && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAuthenticated() && isValidTask(request.resource.data) && 
+                    (isManager() || request.resource.data.createdBy == request.auth.uid || request.resource.data.assigneeEmail == request.auth.token.email);
+      allow delete: if isManager();
+    }
+
+    match /records/{recordId} {
+      allow read: if isAuthenticated();
+      allow create: if isAccountantOrManager() && isValidRecord(request.resource.data) && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAccountantOrManager() && isValidRecord(request.resource.data);
+      allow delete: if isManager();
+    }
+
+    match /invoices/{invoiceId} {
+      allow read: if isAuthenticated();
+      allow create: if isAccountantOrManager() && isValidInvoice(request.resource.data) && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAccountantOrManager() && isValidInvoice(request.resource.data);
+      allow delete: if isManager();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow create, update: if (isManager() || isSetupMode()) && 
+                            (isSetupMode() || isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['groqApiKey', 'rootFolderId', 'spreadsheetId']));
+      allow delete: if isManager();
+    }
+
+    match /internal_config/setup_complete {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isSetupMode();
+    }
+
+    match /internal_config/{configId} {
+      allow read: if isAdmin() || isSetupMode();
+      allow write: if isAdmin() || isSetupMode();
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Hệ Thống Quản Lý GAS",
+  "description": "Giao diện mockup và mã nguồn Google Apps Script cho hệ thống quản lý công việc, hóa đơn, hồ sơ.",
+  "requestFramePermissions": []
+}

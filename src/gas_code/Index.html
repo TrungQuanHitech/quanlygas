@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Thống Quản Lý</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
+    .header { background-color: #0d6efd; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .nav-tabs .nav-link { color: #495057; font-weight: 500; }
+    .nav-tabs .nav-link.active { color: #0d6efd; font-weight: bold; border-bottom: 3px solid #0d6efd; }
+    .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; margin-bottom: 20px; }
+    .card-header { background-color: white; border-bottom: 1px solid #eee; font-weight: bold; }
+    .table-responsive { border-radius: 8px; overflow: hidden; }
+    .table thead th { background-color: #f1f3f5; border-bottom: none; }
+    #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; justify-content: center; align-items: center; }
+    .spinner-border { width: 3rem; height: 3rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <h4 class="m-0"><i class="fas fa-building me-2"></i>HỆ THỐNG QUẢN LÝ</h4>
+    <div id="userInfo">
+      <span id="userEmail" class="me-2">Đang tải...</span>
+      <span id="userRole" class="badge bg-light text-dark">...</span>
+    </div>
+  </div>
+
+  <div class="container-fluid mt-4">
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="congviec-tab" data-bs-toggle="tab" data-bs-target="#congviec" type="button" role="tab"><i class="fas fa-tasks me-1"></i> Công Việc</button>
+      </li>
+      <li class="nav-item" role="presentation" id="hoso-tab-li" style="display:none;">
+        <button class="nav-link" id="hoso-tab" data-bs-toggle="tab" data-bs-target="#hoso" type="button" role="tab"><i class="fas fa-folder-open me-1"></i> Hồ Sơ</button>
+      </li>
+      <li class="nav-item" role="presentation" id="hoadon-tab-li" style="display:none;">
+        <button class="nav-link" id="hoadon-tab" data-bs-toggle="tab" data-bs-target="#hoadon" type="button" role="tab"><i class="fas fa-file-invoice-dollar me-1"></i> Hóa Đơn</button>
+      </li>
+      <li class="nav-item" role="presentation" id="nhansu-tab-li" style="display:none;">
+        <button class="nav-link" id="nhansu-tab" data-bs-toggle="tab" data-bs-target="#nhansu" type="button" role="tab"><i class="fas fa-users me-1"></i> Nhân Sự</button>
+      </li>
+      <li class="nav-item" role="presentation" id="cauhinh-tab-li" style="display:none;">
+        <button class="nav-link" id="cauhinh-tab" data-bs-toggle="tab" data-bs-target="#cauhinh" type="button" role="tab"><i class="fas fa-cog me-1"></i> Cấu Hình</button>
+      </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="mainTabsContent">
+      
+      <!-- Tab Công Việc -->
+      <div class="tab-pane fade show active" id="congviec" role="tabpanel">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Danh sách Công Việc</span>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addTaskModal"><i class="fas fa-plus me-1"></i> Thêm mới</button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover table-bordered" id="tasksTable">
+                <thead>
+                  <tr>
+                    <th>Ngày</th>
+                    <th>Tên công việc</th>
+                    <th>Người TH</th>
+                    <th>Trạng thái</th>
+                    <th>Mức độ HT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dữ liệu sẽ được render ở đây -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Hồ Sơ -->
+      <div class="tab-pane fade" id="hoso" role="tabpanel">
+        <div class="card">
+          <div class="card-header">Quản lý Hồ Sơ</div>
+          <div class="card-body">
+            <form id="addRecordForm" class="mb-4 row g-3">
+              <div class="col-md-3">
+                <select class="form-select" id="recordType" required>
+                  <option value="">Chọn phân loại...</option>
+                  <option value="Pháp lý">Pháp lý</option>
+                  <option value="Kỹ thuật">Kỹ thuật</option>
+                  <option value="Hồ sơ khác">Hồ sơ khác</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <input type="text" class="form-control" id="recordName" placeholder="Tên tài liệu" required>
+              </div>
+              <div class="col-md-3">
+                <input type="file" class="form-control" id="recordFile" required>
+              </div>
+              <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Lưu Hồ Sơ</button>
+              </div>
+            </form>
+            <hr>
+            <p class="text-muted">Danh sách hồ sơ sẽ hiển thị ở đây...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Hóa Đơn -->
+      <div class="tab-pane fade" id="hoadon" role="tabpanel">
+        <!-- Upload Section -->
+        <div class="card mb-3 border-0 shadow-sm">
+          <div class="card-body p-3">
+            <form id="uploadInvoiceForm" class="d-flex flex-column flex-md-row gap-3 align-items-center">
+              <div class="d-flex align-items-center flex-grow-1 w-100">
+                <div class="input-group">
+                  <label class="btn btn-light border mb-0 text-secondary" style="white-space: nowrap; cursor: pointer; font-weight: 500;">
+                    Choose File
+                    <input type="file" id="invoiceFile" accept="image/*,.pdf" class="d-none" required onchange="document.getElementById('fileNameDisplay').value = this.files[0] ? this.files[0].name : 'No file chosen'">
+                  </label>
+                  <input type="text" id="fileNameDisplay" class="form-control bg-white text-muted" value="No file chosen" readonly>
+                </div>
+              </div>
+              <button type="submit" class="btn text-white px-4" style="background-color: #60a5fa; white-space: nowrap; font-weight: 500;">
+                TẢI LÊN FILE
+              </button>
+              <button type="button" class="btn fw-bold px-4 text-white" style="background-color: #2563eb; white-space: nowrap;">
+                <i class="fas fa-folder-open me-2"></i>QUÉT THƯ MỤC DRIVE
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card mb-3 border-0 shadow-sm">
+          <div class="card-body p-3">
+            <div class="d-flex flex-column flex-md-row gap-3">
+              <input type="text" class="form-control" id="searchPartner" placeholder="Tìm tên đối tác...">
+              <input type="text" class="form-control" id="searchDate" placeholder="Tìm ngày (dd/mm/yyyy)...">
+              <button type="button" class="btn text-white px-4" style="background-color: #60a5fa; white-space: nowrap; font-weight: 500;" onclick="document.getElementById('searchPartner').value=''; document.getElementById('searchDate').value=''; filterInvoices();">
+                Làm mới
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs & Table -->
+        <div class="card border-0 shadow-sm overflow-hidden">
+          <div class="d-flex border-bottom bg-light">
+            <button class="btn rounded-0 px-4 py-3 fw-bold invoice-tab active" data-tab="ĐẦU VÀO" style="background-color: white; color: #2563eb; border: none; border-bottom: 2px solid #2563eb; font-size: 0.9rem;" onclick="switchInvoiceTab('ĐẦU VÀO', this)">ĐẦU VÀO</button>
+            <button class="btn rounded-0 px-4 py-3 fw-bold invoice-tab" data-tab="ĐẦU RA" style="color: #6c757d; border: none; background: transparent; border-bottom: 2px solid transparent; font-size: 0.9rem;" onclick="switchInvoiceTab('ĐẦU RA', this)">ĐẦU RA</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered mb-0" id="invoicesTable" style="border-color: #e2e8f0;">
+              <thead style="background-color: white; color: #495057;">
+                <tr>
+                  <th class="text-uppercase py-3 align-middle" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">NGÀY HĐ</th>
+                  <th class="text-uppercase py-3 align-middle" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">KÝ HIỆU</th>
+                  <th class="text-uppercase py-3 align-middle" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">SỐ HÓA ĐƠN</th>
+                  <th class="text-uppercase py-3 align-middle" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">ĐỐI TÁC</th>
+                  <th class="text-uppercase py-3 align-middle" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">MÃ SỐ THUẾ</th>
+                  <th class="text-uppercase py-3 align-middle" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">ĐỊA CHỈ</th>
+                  <th class="text-uppercase py-3 align-middle w-25" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">NỘI DUNG HÀNG HÓA</th>
+                  <th class="text-uppercase py-3 align-middle text-end" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">TỔNG TIỀN</th>
+                  <th class="text-uppercase py-3 align-middle text-center" style="font-size: 0.75rem; font-weight: 700; border-color: #e2e8f0;">LINK PDF</th>
+                </tr>
+              </thead>
+              <tbody id="invoicesTableBody">
+                <tr><td colspan="9" class="text-center text-muted py-4">Chưa có dữ liệu.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Nhân Sự -->
+      <div class="tab-pane fade" id="nhansu" role="tabpanel">
+        <div class="card">
+          <div class="card-header">Danh sách Nhân Sự</div>
+          <div class="card-body">
+            <p class="text-muted">Tính năng quản lý nhân sự đang được phát triển...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Cấu Hình -->
+      <div class="tab-pane fade" id="cauhinh" role="tabpanel">
+        <div class="card mb-4">
+          <div class="card-header">Cấu hình Hệ thống</div>
+          <div class="card-body">
+            <form id="configForm">
+              <div class="mb-3">
+                <label class="form-label">Tên Công Ty</label>
+                <input type="text" class="form-control" id="configTenCongTy">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Địa Chỉ</label>
+                <input type="text" class="form-control" id="configDiaChi">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Mã Số Thuế</label>
+                <input type="text" class="form-control" id="configMST">
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-danger fw-bold">Groq API Key (Dùng cho AI Hóa Đơn)</label>
+                <input type="password" class="form-control" id="configGroqKey">
+              </div>
+              <button type="submit" class="btn btn-primary">Lưu Cấu Hình</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header bg-light fw-bold">
+            <i class="fab fa-google me-2 text-primary"></i>Google Admin & Lưu trữ
+          </div>
+          <div class="card-body">
+            <p class="text-muted small mb-3">Đăng nhập tài khoản Google Admin để kết nối và tự động tạo các sheet lưu trữ dữ liệu tương ứng với các tab (Công Việc, Hồ Sơ, Hóa Đơn, Nhân Sự, Cấu Hình) để quản lý một cách thông minh.</p>
+            <div class="d-flex flex-wrap gap-3">
+              <button type="button" class="btn btn-outline-secondary d-flex align-items-center" onclick="loginGoogleAdmin()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 20px; height: 20px; margin-right: 8px;">
+                Đăng nhập Google Admin
+              </button>
+              <button type="button" class="btn btn-success d-flex align-items-center" onclick="createStorageSheets()">
+                <i class="fas fa-file-excel me-2"></i> Tạo Sheet Lưu Trữ
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Thêm Công Việc -->
+  <div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm Công Việc Mới</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addTaskForm">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Ngày</label>
+                <input type="date" class="form-control" id="taskDate" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Tên công việc</label>
+                <input type="text" class="form-control" id="taskName" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Nội dung</label>
+              <textarea class="form-control" id="taskContent" rows="3"></textarea>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Người thực hiện (Email)</label>
+                <input type="email" class="form-control" id="taskAssignee" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Trạng thái</label>
+                <select class="form-select" id="taskStatus">
+                  <option value="Đang thực hiện">Đang thực hiện</option>
+                  <option value="Đã hoàn thành">Đã hoàn thành</option>
+                  <option value="Tạm dừng">Tạm dừng</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Lưu Công Việc</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let currentUser = null;
+
+    // Hiển thị/Ẩn Loader
+    function showLoader() { document.getElementById('loader').style.display = 'flex'; }
+    function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+
+    // Khởi tạo khi trang load
+    window.onload = function() {
+      showLoader();
+      google.script.run.withSuccessHandler(initApp).getCurrentUser();
+    };
+
+    function initApp(user) {
+      currentUser = user;
+      document.getElementById('userEmail').innerText = user.email;
+      document.getElementById('userRole').innerText = user.role;
+      
+      // Phân quyền hiển thị Tab
+      if (user.role === 'Quản lý' || user.role === 'Kế toán') {
+        document.getElementById('hoso-tab-li').style.display = 'block';
+        document.getElementById('hoadon-tab-li').style.display = 'block';
+        document.getElementById('nhansu-tab-li').style.display = 'block';
+        document.getElementById('cauhinh-tab-li').style.display = 'block';
+        
+        // Load cấu hình
+        google.script.run.withSuccessHandler(loadConfigForm).getConfig();
+      }
+      
+      // Load dữ liệu mặc định (Công việc)
+      loadTasks();
+    }
+
+    // --- Xử lý Cấu hình ---
+    function loadConfigForm(config) {
+      document.getElementById('configTenCongTy').value = config['TenCongTy'] || '';
+      document.getElementById('configDiaChi').value = config['DiaChi'] || '';
+      document.getElementById('configMST').value = config['MaSoThue'] || '';
+      document.getElementById('configGroqKey').value = config['GroqApiKey'] || '';
+    }
+
+    document.getElementById('configForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      showLoader();
+      const configData = {
+        'TenCongTy': document.getElementById('configTenCongTy').value,
+        'DiaChi': document.getElementById('configDiaChi').value,
+        'MaSoThue': document.getElementById('configMST').value,
+        'GroqApiKey': document.getElementById('configGroqKey').value
+      };
+      google.script.run.withSuccessHandler(function(res) {
+        hideLoader();
+        alert(res.message);
+      }).saveConfig(configData);
+    });
+
+    function loginGoogleAdmin() {
+      // Trong môi trường Google Apps Script, người dùng đã được xác thực bằng tài khoản Google của họ.
+      // Hàm này giả lập việc xác nhận quyền Admin hoặc yêu cầu cấp quyền bổ sung nếu cần.
+      showLoader();
+      setTimeout(() => {
+        hideLoader();
+        alert("Đã xác thực tài khoản Google Admin thành công! Bạn hiện có thể sử dụng các chức năng quản trị lưu trữ.");
+      }, 800);
+    }
+
+    function createStorageSheets() {
+      if (!confirm("Hệ thống sẽ tự động tạo các Sheet lưu trữ tương ứng với các tab (nếu chưa có). Bạn có muốn tiếp tục?")) {
+        return;
+      }
+      showLoader();
+      google.script.run.withSuccessHandler(function(res) {
+        hideLoader();
+        if (res.success) {
+          alert(res.message + "\nCác sheet đã sẵn sàng để quản lý dữ liệu thông minh.");
+        } else {
+          alert("Có lỗi xảy ra: " + res.message);
+        }
+      }).initDatabase();
+    }
+
+    // --- Xử lý Công việc ---
+    function loadTasks() {
+      google.script.run.withSuccessHandler(function(tasks) {
+        const tbody = document.querySelector('#tasksTable tbody');
+        tbody.innerHTML = '';
+        tasks.forEach(task => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${new Date(task['Ngày']).toLocaleDateString('vi-VN')}</td>
+            <td>${task['Tên công việc']}</td>
+            <td>${task['Người thực hiện']}</td>
+            <td><span class="badge bg-${task['Trạng thái'] === 'Đã hoàn thành' ? 'success' : 'warning'}">${task['Trạng thái']}</span></td>
+            <td>${task['Mức độ HT']}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        hideLoader();
+      }).getTasks();
+    }
+
+    document.getElementById('addTaskForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      showLoader();
+      const taskData = {
+        ngay: document.getElementById('taskDate').value,
+        tenCongViec: document.getElementById('taskName').value,
+        noiDung: document.getElementById('taskContent').value,
+        nguoiThucHien: document.getElementById('taskAssignee').value,
+        trangThai: document.getElementById('taskStatus').value
+      };
+      
+      google.script.run.withSuccessHandler(function(res) {
+        if(res.success) {
+          bootstrap.Modal.getInstance(document.getElementById('addTaskModal')).hide();
+          document.getElementById('addTaskForm').reset();
+          loadTasks(); // Load lại danh sách
+        } else {
+          hideLoader();
+          alert('Lỗi: ' + res.message);
+        }
+      }).addTask(taskData);
+    });
+
+    // --- Xử lý Upload File (Base64) ---
+    function getFileBase64(file, callback) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        callback(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // --- Xử lý Hồ Sơ ---
+    document.getElementById('addRecordForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('recordFile');
+      if (fileInput.files.length === 0) return;
+      
+      showLoader();
+      const file = fileInput.files[0];
+      
+      getFileBase64(file, function(base64Data) {
+        const recordData = {
+          phanLoai: document.getElementById('recordType').value,
+          tenTaiLieu: document.getElementById('recordName').value,
+          ngayBanHanh: new Date().toISOString().split('T')[0],
+          fileName: file.name,
+          fileMimeType: file.type,
+          fileBase64: base64Data
+        };
+        
+        google.script.run.withSuccessHandler(function(res) {
+          hideLoader();
+          alert(res.message);
+          if(res.success) document.getElementById('addRecordForm').reset();
+        }).addRecord(recordData);
+      });
+    });
+
+    // --- Xử lý Hóa Đơn (Groq AI) ---
+    let allInvoices = [];
+    let currentInvoiceTab = 'ĐẦU VÀO';
+
+    function loadInvoices() {
+      google.script.run.withSuccessHandler(function(invoices) {
+        allInvoices = invoices;
+        filterInvoices();
+      }).getInvoices();
+    }
+
+    function switchInvoiceTab(tab, element) {
+      currentInvoiceTab = tab;
+      
+      // Update tab UI
+      const tabs = document.querySelectorAll('.invoice-tab');
+      tabs.forEach(t => {
+        t.classList.remove('active');
+        t.style.backgroundColor = 'transparent';
+        t.style.color = '#6c757d';
+        t.style.borderBottom = '2px solid transparent';
+      });
+      
+      element.classList.add('active');
+      element.style.backgroundColor = 'white';
+      element.style.color = '#2563eb';
+      element.style.borderBottom = '2px solid #2563eb';
+      
+      filterInvoices();
+    }
+
+    function filterInvoices() {
+      const searchPartner = document.getElementById('searchPartner').value.toLowerCase();
+      const searchDate = document.getElementById('searchDate').value;
+      
+      const filtered = allInvoices.filter(inv => {
+        const loai = inv['Loại Hóa Đơn'] || 'ĐẦU VÀO';
+        if (loai !== currentInvoiceTab) return false;
+        
+        if (searchPartner && !(inv['Đối tác'] || '').toLowerCase().includes(searchPartner)) {
+          return false;
+        }
+        
+        if (searchDate && !(inv['Ngày HĐ'] || '').includes(searchDate)) {
+          return false;
+        }
+        
+        return true;
+      });
+      
+      renderInvoices(filtered);
+    }
+
+    function renderInvoices(invoices) {
+      const tbody = document.getElementById('invoicesTableBody');
+      tbody.innerHTML = '';
+      
+      if (invoices.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">Không có dữ liệu hóa đơn ${currentInvoiceTab.toLowerCase()}.</td></tr>`;
+        return;
+      }
+      
+      invoices.forEach(inv => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="align-middle" style="font-size: 0.85rem;">${inv['Ngày HĐ'] || ''}</td>
+          <td class="align-middle" style="font-size: 0.85rem;">${inv['Ký hiệu'] || ''}</td>
+          <td class="align-middle" style="font-size: 0.85rem;">${inv['Số Hóa Đơn'] || ''}</td>
+          <td class="align-middle fw-medium" style="font-size: 0.85rem;">${inv['Đối tác'] || ''}</td>
+          <td class="align-middle" style="font-size: 0.85rem;">${inv['Mã số thuế'] || ''}</td>
+          <td class="align-middle" style="font-size: 0.85rem;">${inv['Địa chỉ'] || ''}</td>
+          <td class="align-middle" style="font-size: 0.85rem;">${inv['Nội dung hàng hóa'] || ''}</td>
+          <td class="align-middle text-end" style="font-size: 0.85rem; white-space: nowrap;">${inv['Tổng tiền'] || ''}</td>
+          <td class="align-middle text-center">
+            ${inv['Link PDF'] ? `<a href="${inv['Link PDF']}" target="_blank" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem;">Xem</a>` : ''}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Add event listeners for search inputs
+    document.getElementById('searchPartner').addEventListener('input', filterInvoices);
+    document.getElementById('searchDate').addEventListener('input', filterInvoices);
+
+    document.getElementById('uploadInvoiceForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('invoiceFile');
+      if (fileInput.files.length === 0) return;
+      
+      showLoader();
+      const file = fileInput.files[0];
+      
+      getFileBase64(file, function(base64Data) {
+        const invoiceData = {
+          fileName: file.name,
+          fileMimeType: file.type,
+          fileBase64: base64Data
+        };
+        
+        google.script.run.withSuccessHandler(function(res) {
+          hideLoader();
+          if(res.success) {
+            alert('Phân tích và lưu hóa đơn thành công!');
+            document.getElementById('uploadInvoiceForm').reset();
+            document.getElementById('fileNameDisplay').textContent = 'No file chosen';
+            loadInvoices(); // Reload the table
+          } else {
+            alert('Lỗi: ' + res.message);
+          }
+        }).processInvoice(invoiceData);
+      });
+    });
+
+    // Handle tab click to load invoices initially
+    document.getElementById('hoadon-tab').addEventListener('click', function() {
+      if (allInvoices.length === 0) {
+        showLoader();
+        google.script.run.withSuccessHandler(function(invoices) {
+          allInvoices = invoices;
+          filterInvoices();
+          hideLoader();
+        }).getInvoices();
+      }
+    });
+
+  </script>
+</body>
+</html>

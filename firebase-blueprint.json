@@ -1,0 +1,196 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role information.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Quản lý", "Kế toán", "Nhân viên"],
+          "description": "User role for RBAC"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A task assigned to an employee.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "assigneeEmail": {
+          "type": "string",
+          "format": "email"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Đang thực hiện", "Đã hoàn thành", "Tạm dừng"]
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "UID of the creator"
+        }
+      },
+      "required": ["title", "assigneeEmail", "status", "dueDate", "createdAt", "createdBy"]
+    },
+    "Record": {
+      "title": "Record",
+      "description": "A document or file record.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["Pháp lý", "Kỹ thuật", "Hồ sơ khác"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL or base64 of the file"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "name", "fileUrl", "createdAt", "createdBy"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "An invoice processed by AI.",
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string"
+        },
+        "parsedData": {
+          "type": "string",
+          "description": "JSON string of parsed data"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string"
+        }
+      },
+      "required": ["fileName", "parsedData", "createdAt", "createdBy"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global application settings.",
+      "type": "object",
+      "properties": {
+        "companyName": {
+          "type": "string"
+        },
+        "groqApiKey": {
+          "type": "string"
+        },
+        "rootFolderId": {
+          "type": "string"
+        },
+        "spreadsheetId": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["companyName"]
+    },
+    "InternalConfig": {
+      "title": "InternalConfig",
+      "description": "System-level configurations.",
+      "type": "object",
+      "properties": {
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedBy": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profiles."
+    },
+    "/tasks/{taskId}": {
+      "schema": {
+        "$ref": "#/entities/Task"
+      },
+      "description": "Stores tasks."
+    },
+    "/records/{recordId}": {
+      "schema": {
+        "$ref": "#/entities/Record"
+      },
+      "description": "Stores document records."
+    },
+    "/invoices/{invoiceId}": {
+      "schema": {
+        "$ref": "#/entities/Invoice"
+      },
+      "description": "Stores processed invoices."
+    },
+    "/settings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/Setting"
+      },
+      "description": "Stores global settings (e.g., 'general')."
+    },
+    "/internal_config/{configId}": {
+      "schema": {
+        "$ref": "#/entities/InternalConfig"
+      },
+      "description": "Stores internal system configurations."
+    }
+  }
+}
