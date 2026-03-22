@@ -437,7 +437,7 @@ export default function Settings({ user }: { user: User }) {
                 required
                 value={settings.companyName || ''}
                 onChange={(e) => setSettings({...settings, companyName: e.target.value})}
-                disabled={user.role !== 'Quản lý' && user.role !== 'Admin'}
+                disabled={user.role !== 'Quản lý' && user.role !== 'Admin' && user.role !== 'Khách'}
                 className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
                 placeholder="Nhập tên công ty..."
               />
@@ -452,7 +452,7 @@ export default function Settings({ user }: { user: User }) {
                 type="text" 
                 value={settings.address || ''}
                 onChange={(e) => setSettings({...settings, address: e.target.value})}
-                disabled={user.role !== 'Quản lý' && user.role !== 'Admin'}
+                disabled={user.role !== 'Quản lý' && user.role !== 'Admin' && user.role !== 'Khách'}
                 className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
                 placeholder="Nhập địa chỉ công ty..."
               />
@@ -467,7 +467,7 @@ export default function Settings({ user }: { user: User }) {
                 type="text" 
                 value={settings.taxId || ''}
                 onChange={(e) => setSettings({...settings, taxId: e.target.value})}
-                disabled={user.role !== 'Quản lý' && user.role !== 'Admin'}
+                disabled={user.role !== 'Quản lý' && user.role !== 'Admin' && user.role !== 'Khách'}
                 className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
                 placeholder="Nhập mã số thuế..."
               />
@@ -494,7 +494,7 @@ export default function Settings({ user }: { user: User }) {
               )}
             </div>
 
-            {(user.role === 'Quản lý' || user.role === 'Admin') && (
+            {(user.role === 'Quản lý' || user.role === 'Admin' || user.role === 'Khách') && (
               <div className="pt-4 flex justify-end">
                 <button 
                   type="submit" 

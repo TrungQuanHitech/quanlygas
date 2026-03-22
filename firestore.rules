@@ -22,6 +22,10 @@ service cloud.firestore {
       );
     }
 
+    function isGuest() {
+      return isAuthenticated() && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
     function isManager() {
       return isAdmin();
     }
@@ -86,10 +90,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       // Allow Managers/Accountants to create new user entries (whitelist)
-      // Also allow the first user ever to create their own profile as Manager (Admin) if setup is not complete
-      allow create: if isAuthenticated() && 
-                    (isAccountantOrManager() || (isOwner(userId) && isSetupMode() && request.resource.data.role == 'Quản lý')) && 
-                    isValidUser(request.resource.data);
+      // Also allow the SetupWizard to create the first Manager (Admin) if setup is not complete
+      allow create: if (isAuthenticated() && isAccountantOrManager() && isValidUser(request.resource.data)) ||
+                    (isSetupMode() && request.resource.data.role == 'Quản lý' && isValidUser(request.resource.data));
       
       // Allow the user themselves to update their own record (UID, lastLogin, status, displayName)
       // OR allow Managers/Accountants to update roles/status
@@ -125,13 +128,13 @@ service cloud.firestore {
 
     match /settings/{settingId} {
       allow read: if isAuthenticated();
-      allow create, update: if (isManager() || isSetupMode()) && 
-                            (isSetupMode() || isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['groqApiKey', 'rootFolderId', 'spreadsheetId']));
+      allow create, update: if (isManager() || isSetupMode() || isGuest()) && 
+                            (isSetupMode() || isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['groqApiKey', 'rootFolderId', 'spreadsheetId', 'aiApiKey']));
       allow delete: if isManager();
     }
 
     match /internal_config/setup_complete {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isAdmin() || isSetupMode();
     }
 

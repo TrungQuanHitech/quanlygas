@@ -19,14 +19,15 @@ interface LayoutProps {
 }
 
 export default function Layout({ user, onLogout }: LayoutProps) {
+  const isGuest = user.role === 'Khách';
   const isManagerOrAccountant = user.role === 'Quản lý' || user.role === 'Kế toán' || user.role === 'Admin';
 
   const navItems = [
-    { path: '/tasks', icon: CheckSquare, label: 'Công Việc', show: true },
-    { path: '/records', icon: FolderOpen, label: 'Hồ Sơ', show: isManagerOrAccountant },
-    { path: '/invoices', icon: FileText, label: 'Hóa Đơn', show: isManagerOrAccountant },
-    { path: '/personnel', icon: Users, label: 'Nhân Sự', show: isManagerOrAccountant },
-    { path: '/settings', icon: Settings, label: 'Cấu Hình', show: isManagerOrAccountant },
+    { path: '/tasks', icon: CheckSquare, label: 'Công Việc', show: !isGuest },
+    { path: '/records', icon: FolderOpen, label: 'Hồ Sơ', show: !isGuest && isManagerOrAccountant },
+    { path: '/invoices', icon: FileText, label: 'Hóa Đơn', show: !isGuest && isManagerOrAccountant },
+    { path: '/personnel', icon: Users, label: 'Nhân Sự', show: !isGuest && isManagerOrAccountant },
+    { path: '/settings', icon: Settings, label: 'Cấu Hình', show: isManagerOrAccountant || isGuest },
   ];
 
   return (

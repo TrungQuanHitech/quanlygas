@@ -1,4 +1,4 @@
-export type Role = 'Admin' | 'Quản lý' | 'Kế toán' | 'Nhân viên';
+export type Role = 'Admin' | 'Quản lý' | 'Kế toán' | 'Nhân viên' | 'Khách';
 export type UserStatus = 'Chờ kích hoạt' | 'Đang làm việc' | 'Tạm nghỉ' | 'Đã nghỉ việc';
 
 export interface User {
