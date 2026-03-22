@@ -96,7 +96,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && 
                     (isAccountantOrManager() || 
                      (isOwner(userId) && 
-                      request.resource.data.diff(resource.data).affectedKeys().hasAny(['uid', 'lastLogin', 'status', 'displayName']))
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid', 'lastLogin', 'status', 'displayName']))
                     );
       allow delete: if isManager();
     }
