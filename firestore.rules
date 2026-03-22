@@ -127,7 +127,7 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() || isSetupMode();
       allow create, update: if (isManager() || isSetupMode() || isGuest()) && 
                             (isSetupMode() || isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['groqApiKey', 'rootFolderId', 'spreadsheetId', 'aiApiKey']));
       allow delete: if isManager();

@@ -5,7 +5,7 @@ import { doc, getDoc, collection, query, where, getDocs, limit, updateDoc } from
 import { auth, db, loginWithGoogle } from './firebase';
 import { User } from './types';
 import Layout from './components/Layout';
-import SetupWizard from './components/SetupWizard';
+import SetupWrapper from './components/SetupWrapper';
 import Tasks from './pages/Tasks';
 import Records from './pages/Records';
 import Invoices from './pages/Invoices';
@@ -30,7 +30,7 @@ export default function App() {
       try {
         const setupRef = doc(db, 'internal_config', 'setup_complete');
         const setupSnap = await getDoc(setupRef);
-        setIsSetupComplete(setupSnap.exists());
+        setIsSetupComplete(false); // TEST FLAG
       } catch (e) {
         console.error("Error checking setup status:", e);
         setIsSetupComplete(true);
@@ -42,6 +42,7 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (isSetupComplete === null) return;
+      if (isSetupComplete === false) return; // Skip auth checks during setup
       
       setLoading(true);
       setError(null);
@@ -165,7 +166,7 @@ export default function App() {
 
   if (isSetupComplete === false) {
     return (
-      <SetupWizard 
+      <SetupWrapper 
         onComplete={() => window.location.reload()}
       />
     );
